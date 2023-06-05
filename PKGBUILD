@@ -1,9 +1,9 @@
 # Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
 
-pkgbase=linux
+pkgbase=linux-syno
 pkgver=6.3.5.arch1
 pkgrel=1
-pkgdesc='Linux'
+pkgdesc='Linux for the Synology DS1522+'
 _srctag=v${pkgver%.*}-${pkgver##*.}
 url="https://github.com/archlinux/linux/commits/$_srctag"
 arch=(x86_64)
@@ -18,12 +18,6 @@ makedepends=(
   perl
   tar
   xz
-
-  # htmldocs
-  graphviz
-  imagemagick
-  python-sphinx
-  texlive-latexextra
 )
 options=('!strip')
 _srcname=archlinux-linux
@@ -38,11 +32,16 @@ validpgpkeys=(
   C7E7849466FE2358343588377258734B41C31549  # David Runge <dvzrv@archlinux.org>
 )
 b2sums=('SKIP'
-        'c2d1c69265adc041dc0364e448f6e86dc4c9ca1207c84071abc1675dd820534a8ab5a230e579e68bfb1bf2b861f23ad34e090f8ceaef5e265ea95e2bc6946013')
+        '9c7ed0866d3e218999687c0dee2930961b1612f2a1a5ba67ebe0fe1879edd911ac9268410fa1115895aa72ac567ae0ef50142608251381f71fec01488e848102')
 
 export KBUILD_BUILD_HOST=archlinux
 export KBUILD_BUILD_USER=$pkgbase
 export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
+
+# AMD R1000 is zen family v1.
+# confirmed experimentally that gcc allows you to give -march multiple times,
+# it doesn't error, just ignores all but the last one.
+export CFLAGS="$CFLAGS -march=znver1"
 
 _make() {
   test -s version
@@ -70,7 +69,8 @@ prepare() {
 
   echo "Setting config..."
   cp ../config .config
-  _make olddefconfig
+  #_make olddefconfig
+  _make menuconfig
   diff -u ../config .config || :
 
   echo "Prepared $pkgbase version $(<version)"
@@ -78,7 +78,7 @@ prepare() {
 
 build() {
   cd $_srcname
-  _make htmldocs all
+  _make all
 }
 
 _package() {
@@ -225,7 +225,6 @@ _package-docs() {
 pkgname=(
   "$pkgbase"
   "$pkgbase-headers"
-  "$pkgbase-docs"
 )
 for _p in "${pkgname[@]}"; do
   eval "package_$_p() {
