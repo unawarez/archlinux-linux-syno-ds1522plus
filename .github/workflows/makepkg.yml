@@ -6,8 +6,10 @@ jobs:
     container:
       image: archlinux:base-devel
     steps:
-      - name: Pacman sync & upgrade
-        run: pacman -Syu --noconfirm
+      - name: Bootstrap pacman
+        run: |
+          pacman-key --init
+          pacman -Syu --noconfirm
       - name: Create build user
         run: |
           useradd user
