@@ -10,6 +10,13 @@ jobs:
         run: useradd user
       - name: git checkout
         uses: actions/checkout@v4
+      - name: debug ls'ing
+        run: |
+          echo github.workspace: `${{ github.workspace }}`
+          echo work:
+          ls -la ~/work
+          echo __w:
+          ls -la /__w
       - name: wtf is at github.workspace a.k.a. `${{ github.workspace }}` ?
         run: ls -la "${{ github.workspace }}"
       - name: chown repo to user
