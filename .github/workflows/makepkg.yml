@@ -6,8 +6,12 @@ jobs:
     container:
       image: archlinux:base-devel
     steps:
+      - name: create build user
+        run: useradd user
       - name: git checkout
         uses: actions/checkout@v4
+      - name: chown repo to user
+        run: chown --recursive user "${{ github.workspace }}"
       - name: makepkg
         working-directory: ${{ github.workspace }}
-        run: makepkg -s
+        run: su -c 'makepkg -s' user
