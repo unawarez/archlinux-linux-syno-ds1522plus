@@ -5,17 +5,18 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: archlinux:base-devel
-      # options: --user root
     steps:
-      - name: create build user
+      - name: Pacman sync & upgrade
+        run: pacman -Syu
+      - name: Create build user
         run: |
           useradd user
           echo 'user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
-      - name: git checkout
+      - name: Clone repo
         uses: actions/checkout@v4
       # based on dumb experiments, cwd here is /__w/blabla/... the full checkout dir,
       # and github.workspace is completely wrong and doesn't exist.
-      - name: chown repo to build user
+      - name: Chown repo to build user
         run: chown --recursive user .
-      - name: makepkg
+      - name: Run makepkg
         run: sudo -u user makepkg -s
