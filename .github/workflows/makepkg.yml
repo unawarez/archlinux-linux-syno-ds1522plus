@@ -5,6 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: archlinux:base-devel
+      options: --user root
     steps:
       - name: create build user
         run: useradd user
@@ -12,7 +13,8 @@ jobs:
         uses: actions/checkout@v4
       - name: debug ls'ing
         run: |
-          echo github.workspace: `${{ github.workspace }}`
+          echo cwd: `pwd`
+          echo github.workspace: '${{ github.workspace }}'
           echo work:
           ls -la ~/work
           echo __w:
