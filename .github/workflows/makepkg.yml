@@ -10,8 +10,10 @@ jobs:
         run: useradd user
       - name: git checkout
         uses: actions/checkout@v4
+      - name: wtf is at github.workspace a.k.a. `${{ github.workspace }}` ?
+        run: ls -la "${{ github.workspace }}"
       - name: chown repo to user
-        run: chown --recursive user "${{ runner.workspace }}"
+        run: chown --recursive user "${{ github.workspace }}"
       - name: makepkg
         working-directory: ${{ github.workspace }}
         run: su -c 'makepkg -s' user
