@@ -8,7 +8,9 @@ jobs:
       # options: --user root
     steps:
       - name: create build user
-        run: useradd user
+        run: |
+          useradd user
+          echo 'user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
       - name: git checkout
         uses: actions/checkout@v4
       # based on dumb experiments, cwd here is /__w/blabla/... the full checkout dir,
