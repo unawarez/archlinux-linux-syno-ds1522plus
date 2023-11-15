@@ -5,24 +5,15 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: archlinux:base-devel
-      options: --user root
+      # options: --user root
     steps:
       - name: create build user
         run: useradd user
       - name: git checkout
         uses: actions/checkout@v4
-      - name: debug ls'ing
-        run: |
-          echo cwd: `pwd`
-          echo github.workspace: '${{ github.workspace }}'
-          echo work:
-          ls -la ~/work
-          echo __w:
-          ls -la /__w
-      - name: wtf is at github.workspace a.k.a. `${{ github.workspace }}` ?
-        run: ls -la "${{ github.workspace }}"
-      - name: chown repo to user
-        run: chown --recursive user "${{ github.workspace }}"
+      # based on dumb experiments, cwd here is /__w/blabla/... the full checkout dir,
+      # and github.workspace is completely wrong and doesn't exist.
+      - name: chown repo to build user
+        run: chown --recursive user .
       - name: makepkg
-        working-directory: ${{ github.workspace }}
-        run: su -c 'makepkg -s' user
+        run: sudo -u user makepkg -s
