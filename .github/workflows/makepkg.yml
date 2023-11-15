@@ -1,0 +1,13 @@
+name: makepkg
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+    steps:
+      - name: git checkout
+        uses: actions/checkout@v4
+      - name: makepkg
+        working-directory: ${{ github.workspace }}
+        run: makepkg -s
