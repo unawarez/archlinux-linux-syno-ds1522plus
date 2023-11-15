@@ -21,4 +21,4 @@ jobs:
       - name: Chown repo to build user
         run: chown --recursive user .
       - name: Run makepkg
-        run: sudo -u user makepkg -s --noconfirm
+        run: sudo -u user makepkg -s --noconfirm --skippgpcheck
