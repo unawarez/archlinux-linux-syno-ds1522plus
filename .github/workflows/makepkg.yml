@@ -7,7 +7,7 @@ jobs:
       image: archlinux:base-devel
     steps:
       - name: Pacman sync & upgrade
-        run: pacman -Syu
+        run: pacman -Syu --noconfirm
       - name: Create build user
         run: |
           useradd user
@@ -19,4 +19,4 @@ jobs:
       - name: Chown repo to build user
         run: chown --recursive user .
       - name: Run makepkg
-        run: sudo -u user makepkg -s
+        run: sudo -u user makepkg -s --noconfirm
