@@ -1,5 +1,11 @@
 name: build
 on: [push]
+
+defaults:
+  run:
+    # required to get `-eo pipefail`
+    shell: bash
+
 jobs:
   build:
     runs-on: ubuntu-latest
