@@ -4,7 +4,7 @@ HERE="$(dirname "$0")"
 set -xeuo pipefail
 sudo swapon /swapfile || swapon --show
 sudo mount -o remount,size=8G /tmp
-sudo cp /boot/vmlinuz-linux-syno{,.backup}
-sudo cp /boot/initramfs-linux-syno{,.backup}.img
+sudo cp /boot/vmlinuz-linux-syno-ds1522x{,.backup}
+sudo cp /boot/initramfs-linux-syno-ds1522x{,.backup}.img
 makepkg -sci "$HERE"
 # TODO makepkg -sc, THEN make the .backup files, then pacman -U linux-syno-*.pkg.*

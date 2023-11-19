@@ -1,10 +1,10 @@
 # Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
 
-pkgbase=linux-syno
+pkgbase=linux-syno-ds1522x
 pkgver=6.6.1.arch1
 pkgrel=1
-pkgdesc='Linux for the Synology DS1522+'
-url='https://github.com/archlinux/linux'
+pkgdesc='Linux kernel for the Synology DS1522+'
+url='https://github.com/unawarez/archlinux-linux-syno-ds1522x'
 arch=(x86_64)
 license=(GPL2)
 makedepends=(
