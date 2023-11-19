@@ -1,4 +1,4 @@
-name: makepkg
+name: build
 on: [push]
 jobs:
   build:
@@ -10,6 +10,15 @@ jobs:
         run: |
           useradd -m user
           echo 'user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+      - name: Clone repo
+        uses: actions/checkout@v4
+      # based on dumb experiments, cwd here is /__w/blabla/... the full checkout dir,
+      # and github.workspace is completely wrong and doesn't exist.
+      # so, just trust cwd for all subsequent steps.
+      - name: Ensure .SRCINFO isn't stale
+        run: |
+          sudo -u user makepkg --printsrcinfo > /tmp/.SRCINFO
+          diff .SRCINFO /tmp/.SRCINFO
       - name: Get upstream PGP keys
         # this is very sensitive to choice of keyserver per key.
         # keyserver.ubuntu.com should be the gpg default now.
@@ -17,11 +26,6 @@ jobs:
         run: |
           sudo -u user gpg --keyserver hkps://keys.openpgp.org --recv-keys A2FF3A36AAA56654109064AB19802F8B0D70FC30
           sudo -u user gpg --recv-keys ABAF11C65A2970B130ABE3C479BE3E4300411886 647F28654894E3BD457199BE38DBBDC86092693E
-      - name: Clone repo
-        uses: actions/checkout@v4
-      # based on dumb experiments, cwd here is /__w/blabla/... the full checkout dir,
-      # and github.workspace is completely wrong and doesn't exist.
-      # so, just trust cwd for all subsequent steps.
       - name: Chown repo to build user
         run: chown --recursive user .
       - name: Bootstrap pacman
@@ -29,7 +33,7 @@ jobs:
           pacman-key --init
           pacman -Syu --noconfirm
       - name: Run makepkg
-        run: sudo -u user makepkg -s --noconfirm
+        run: sudo -u user MAKEFLAGS="$MAKEFLAGS -j$(nproc)" makepkg -s --noconfirm
       - name: Archive packages
         uses: actions/upload-artifact@v3
         with:
