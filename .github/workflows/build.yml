@@ -8,9 +8,10 @@ defaults:
 
 jobs:
   build:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
-    container:
-      image: archlinux:base-devel
+    container: archlinux:base-devel
     steps:
       - uses: actions/checkout@v4
       # based on dumb experiments, cwd here is /__w/blabla/... the full checkout dir,
@@ -49,10 +50,16 @@ jobs:
         run: |
           pacman-key --init
           pacman -Syu --noconfirm
+      - name: Install github-cli
+        # github-cli does not depend on git; lolsob
+        run: pacman -S git github-cli --noconfirm
       - name: Run makepkg
         run: sudo -u user MAKEFLAGS="$MAKEFLAGS -j$(nproc)" makepkg -s --noconfirm
-      - name: Save packages
-        uses: actions/upload-artifact@v3
-        with:
-          name: packages
-          path: linux-syno*.pkg.*
+      - name: Create release
+        # TODO propagate package version to tag name.
+        # it allows duplicate tag names, but it is terribly confusing later in the UI.
+        run: |
+          tar cvf /tmp/packages.tar linux-syno*.pkg.*
+          gh release create gh-actions-latest /tmp/packages.tar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
