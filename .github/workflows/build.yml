@@ -22,7 +22,15 @@ jobs:
       - name: Ensure .SRCINFO isn't stale
         run: |
           sudo -u user makepkg --printsrcinfo > /tmp/.SRCINFO
-          diff .SRCINFO /tmp/.SRCINFO
+          diff .SRCINFO /tmp/.SRCINFO | tee /tmp/.SRCINFO.patch
+
+      - name: (fail) Save .SRCINFO diff
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: required-patches
+          path: /tmp/.SRCINFO.patch
+
       - name: Get upstream PGP keys
         # this is very sensitive to choice of keyserver per key.
         # keyserver.ubuntu.com should be the gpg default now.
@@ -37,7 +45,7 @@ jobs:
           pacman -Syu --noconfirm
       - name: Run makepkg
         run: sudo -u user MAKEFLAGS="$MAKEFLAGS -j$(nproc)" makepkg -s --noconfirm
-      - name: Archive packages
+      - name: Save packages
         uses: actions/upload-artifact@v3
         with:
           name: packages
