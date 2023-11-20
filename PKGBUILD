@@ -50,7 +50,7 @@ export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EP
 # AMD R1000 is zen family v1.
 # confirmed experimentally that gcc allows you to give -march multiple times,
 # it doesn't error, just ignores all but the last one.
-export CFLAGS="$CFLAGS -march=znver1"
+export KCFLAGS="$KCFLAGS -march=znver1"
 
 prepare() {
   cd $_srcname
