@@ -55,11 +55,12 @@ jobs:
         run: pacman -S git github-cli --noconfirm
       - name: Run makepkg
         run: sudo -u user MAKEFLAGS="$MAKEFLAGS -j$(nproc)" makepkg -s --noconfirm
+      # somehow gh can't see the git repo after makepkg.
       - name: Create release
         # TODO propagate package version to tag name.
         # it allows duplicate tag names, but it is terribly confusing later in the UI.
         run: |
           tar cvf /tmp/packages.tar linux-syno*.pkg.*
-          gh release create gh-actions-latest /tmp/packages.tar
+          gh release create --repo ${{ github.repository }} gh-actions-latest /tmp/packages.tar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
