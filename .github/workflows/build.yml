@@ -52,6 +52,7 @@ jobs:
         run: git config --global --add safe.directory "$(realpath .)"
       - name: Commit and push
         run: |
+          echo lol this sucks $GIT_AUTHOR_NAME $GIT_AUTHOR_EMAIL
           git status || exit 0
           git commit -a -m "bot chore: update .SRCINFO and pkgbuild sums"
           git push
