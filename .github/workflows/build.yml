@@ -45,6 +45,8 @@ jobs:
         run: |
           pacman -S pacman-contrib --noconfirm
           sudo -u user updpkgsums
+      - name: git dubious ownership hack
+        run: git config --global --add safe.directory "$(realpath)"
       - name: Commit and push
         run: |
           git status || exit 0
