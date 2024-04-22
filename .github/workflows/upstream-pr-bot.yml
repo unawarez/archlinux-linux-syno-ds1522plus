@@ -18,7 +18,8 @@ jobs:
       - uses: actions/checkout@v4
       # a necessary component of `gh pr new` is having a unique branch already created with the commits on it.
       # how to clean these branches up?
-      - run: git show --no-patch
+      - run: git config user.name upstream-pr-bot
+      - run: git config user.email null@bot
       - run: git checkout -b "$BRANCH_NAME"
       # don't know if it's guaranteed that main always points to latest tagged release,
       # but if it isn't I don't know what else to do.
