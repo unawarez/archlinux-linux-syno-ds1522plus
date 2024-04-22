@@ -1,6 +1,13 @@
 name: build
-on: [push]
-
+on:
+  push:
+    branches: main
+    paths:
+      - "!.github"
+      - ".github/workflows/build.yml"
+      - "!README*"
+      - "!.gitignore"
+      - "!synobuild"
 defaults:
   run:
     # required to get `-eo pipefail`
