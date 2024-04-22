@@ -17,10 +17,18 @@ jobs:
 
   fix-srcinfo-and-sums:
     name: Push fixed .SRCINFO and update pkgbuild checksums
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
       # makepkg fails even for printsrcinfo if uid==0 or if the src dir isn't writable.
+      - name: Initialize pacman
+        run: |
+          pacman-key --init
+          pacman -Sy
+        # WARN: not doing -Syu, so technically installing anything is UB, but what is being installed seems harmless
+        # and -Syu MULTIPLE TIMES per run is wasteful.
       - name: Create build user
         run: |
           useradd -m user
@@ -30,16 +38,14 @@ jobs:
       - name: Chown repo to build user
         run: chown --recursive user .
       - name: Regenerate .SRCINFO
-        run: |
-          sudo -u user makepkg --printsrcinfo > .SRCINFO
-      - name: Install updpkgsums
-        run: |
-          pacman-key --init
-          pacman -Syu pacman-contrib --noconfirm
+        run: sudo -u user makepkg --printsrcinfo > .SRCINFO
       - name: Fix pkgbuild checksums
-        run: sudo -u user updpkgsums
+        run: |
+          pacman -S pacman-contrib --noconfirm
+          sudo -u user updpkgsums
       - name: Commit and push
         run: |
+          pacman -S git --noconfirm
           git status || exit 0
           git commit -a -m "bot chore: update .SRCINFO and pkgbuild sums" \
             --author "GitHub Actions runner <null@bot>"
@@ -66,7 +72,7 @@ jobs:
       - name: Chown repo to build user
         run: chown --recursive user .
 
-      - name: Ensure .SRCINFO isn't stale
+      - name: Ensure .SRCINFO is up to date
         run: |
           sudo -u user makepkg --printsrcinfo > /tmp/.SRCINFO
           diff .SRCINFO /tmp/.SRCINFO
