@@ -30,9 +30,11 @@ jobs:
       # don't know if it's guaranteed that main always points to latest tagged release,
       # but if it isn't I don't know what else to do.
       # allow-unrelated-histories isn't needed at a local cli so not sure what's different here.
-      - run: git pull --no-rebase --allow-unrelated-histories -s ort -X theirs "$UPSTREAM_REMOTE" "$UPSTREAM_REF"
+      - run: git pull --no-rebase --allow-unrelated-histories -s ort -X ours "$UPSTREAM_REMOTE" "$UPSTREAM_REF"
       # this automerge commit will 100% have wrong content in the pkgbuild, e.g. ignoring anything related to the new version number!
       # user just has to know that a commit (maybe amend) is needed. how can this be automated?
-      # the wrongness of pkgbuild also means there is no point regenerating .srcinfo or checksums right now.
+      # the wrongness of pkgbuild also means there is no point regenerating .SRCINFO or checksums right now.
+      # in fact let's just delete .SRCINFO to avoid diff noise. another bot run can just generate it.
+      - run: git rm -f .SRCINFO
       - run: git push -u origin "$BRANCH_NAME"
-      - run: gh pr create --title "Merge new upstream version" --draft --body "Please revise this automerge diff and then bring it into main!\n\n—GitHub Actions"
+      - run: gh pr create --title "Merge new upstream version" --draft --body "Please revise this automerge diff and then bring it into main!"
