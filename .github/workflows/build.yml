@@ -53,7 +53,7 @@ jobs:
         run: |
           git diff || exit 0
           git config --global user.name "GitHub Actions"
-          git config --global user.email "null@bot
+          git config --global user.email "null@bot"
           git commit -a -m "bot chore: update .SRCINFO and pkgbuild sums"
           git push
 
