@@ -66,9 +66,12 @@ jobs:
     container: archlinux:base-devel
     steps:
       - uses: actions/checkout@v4
-      # based on dumb experiments, cwd here is /__w/blabla/... the full checkout dir,
-      # and github.workspace is completely wrong and doesn't exist.
-      # so, just trust cwd for all subsequent steps.
+        with:
+          # TODO bad weird hack: srcinfo job might push, moving the branch that triggered this from aaa to bbb.
+          # but actions/checkout will still read aaa here from the workflow info. we want bbb though.
+          # this workd forcing ref to main because this workflow is only triggered on main. it's a stupid bug if any other
+          # branches are ever enabled though.
+          ref: main
 
       # makepkg fails even for printsrcinfo if uid==0 or if the src dir isn't writable.
       - name: Create build user
