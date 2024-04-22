@@ -13,6 +13,7 @@ env:
 permissions:
   # writing the pr topic branch is writing to the real repo...
   contents: write
+  # pull-requests: write is gated behind a repo settings UI-only checkbox for "allow PR creation and approval by Actions"!
   pull-requests: write
 jobs:
   job:
