@@ -1,5 +1,6 @@
 name: Create an upstream merge PR every so often
 on:
+  workflow_dispatch:
   schedule:
   - cron: "17 17 * * *"
 
