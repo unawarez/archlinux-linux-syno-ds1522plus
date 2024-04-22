@@ -22,7 +22,8 @@ jobs:
       - run: git checkout -b "$BRANCH_NAME"
       # don't know if it's guaranteed that main always points to latest tagged release,
       # but if it isn't I don't know what else to do.
-      - run: git pull --no-rebase -s ort -X theirs "$UPSTREAM_REMOTE" "$UPSTREAM_REF"
+      # allow-unrelated-histories isn't needed at a local cli so not sure what's different here.
+      - run: git pull --no-rebase --allow-unrelated-histories -s ort -X theirs "$UPSTREAM_REMOTE" "$UPSTREAM_REF"
       # this automerge commit will 100% have wrong content in the pkgbuild, e.g. ignoring anything related to the new version number!
       # user just has to know that a commit (maybe amend) is needed. how can this be automated?
       # the wrongness of pkgbuild also means there is no point regenerating .srcinfo or checksums right now.
