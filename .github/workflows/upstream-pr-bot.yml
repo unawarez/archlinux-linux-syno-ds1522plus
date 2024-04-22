@@ -30,4 +30,5 @@ jobs:
       # this automerge commit will 100% have wrong content in the pkgbuild, e.g. ignoring anything related to the new version number!
       # user just has to know that a commit (maybe amend) is needed. how can this be automated?
       # the wrongness of pkgbuild also means there is no point regenerating .srcinfo or checksums right now.
+      - run: git push
       - run: gh pr create --title "Merge new upstream version" --draft --body "Please revise this automerge diff and then bring it into main!\n\n—GitHub Actions"
