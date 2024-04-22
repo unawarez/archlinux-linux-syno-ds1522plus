@@ -33,7 +33,9 @@ jobs:
         run: |
           sudo -u user makepkg --printsrcinfo > .SRCINFO
       - name: Install updpkgsums
-        run: pacman -S pacman-contrib --noconfirm
+        run: |
+          pacman-key --init
+          pacman -Syu pacman-contrib --noconfirm
       - name: Fix pkgbuild checksums
         run: sudo -u user updpkgsums
       - name: Commit and push
