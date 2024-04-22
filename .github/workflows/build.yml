@@ -38,7 +38,9 @@ jobs:
       - name: Chown repo to build user
         run: chown --recursive user .
       - name: Regenerate .SRCINFO
-        run: sudo -u user makepkg --printsrcinfo > .SRCINFO
+        run: |
+          sudo -u user makepkg --printsrcinfo > .SRCINFO
+          chown user .SRCINFO
       - name: Fix pkgbuild checksums
         run: |
           pacman -S pacman-contrib --noconfirm
