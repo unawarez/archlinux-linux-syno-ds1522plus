@@ -41,6 +41,7 @@ jobs:
         run: |
           sudo -u user makepkg --printsrcinfo > .SRCINFO
           chown user .SRCINFO
+          git add .SRCINFO
       - name: Fix pkgbuild checksums
         run: |
           pacman -S pacman-contrib --noconfirm
@@ -49,10 +50,9 @@ jobs:
         run: git config --global --add safe.directory "$(realpath .)"
       - name: Commit and push
         run: |
-          # even git STATUS fails without name and email! and it will not read the GIT_AUTHOR* vars! sucks!
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "null@bot"
           git diff || exit 0
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "null@bot
           git commit -a -m "bot chore: update .SRCINFO and pkgbuild sums"
           git push
 
