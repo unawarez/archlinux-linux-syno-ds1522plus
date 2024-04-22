@@ -1,0 +1,25 @@
+name: Create an upstream merge PR every so often
+on:
+  schedule:
+  - cron: "17 17 * * *"
+
+env:
+  UPSTREAM_REMOTE: "https://gitlab.archlinux.org/archlinux/packaging/packages/linux.git"
+  UPSTREAM_REF: main
+  BRANCH_NAME: "actions-merge-upstream-${{ github.run_id }}"
+
+jobs:
+  job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # a necessary component of `gh pr new` is having a unique branch already created with the commits on it.
+      # how to clean these branches up?
+      - run: git checkout -b "$BRANCH_NAME"
+      # don't know if it's guaranteed that main always points to latest tagged release,
+      # but if it isn't I don't know what else to do.
+      - run: git pull -s ort -X ours "$UPSTREAM_REMOTE" "$UPSTREAM_REF"
+      # this automerge commit will 100% have wrong content in the pkgbuild, e.g. ignoring anything related to the new version number!
+      # user just has to know that a commit (maybe amend) is needed. how can this be automated?
+      # the wrongness of pkgbuild also means there is no point regenerating .srcinfo or checksums right now.
+      - run: gh pr create --title "Merge new upstream version" --draft --body "Please revise this automerge diff and then bring it into main!\n\n—GitHub Actions"
