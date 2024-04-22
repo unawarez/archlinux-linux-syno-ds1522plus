@@ -93,7 +93,7 @@ jobs:
         # TODO why is there the keys/ dir in here? what is the threat model?
         run: |
           sudo -u user gpg --keyserver hkps://keys.openpgp.org --recv-keys A2FF3A36AAA56654109064AB19802F8B0D70FC30
-          sudo -u user gpg --recv-keys ABAF11C65A2970B130ABE3C479BE3E4300411886 647F28654894E3BD457199BE38DBBDC86092693E
+          sudo -u user gpg --recv-keys ABAF11C65A2970B130ABE3C479BE3E4300411886 647F28654894E3BD457199BE38DBBDC86092693E B8AC08600F108CDF
       - name: Bootstrap pacman
         run: |
           pacman-key --init
