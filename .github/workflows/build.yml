@@ -35,19 +35,14 @@ jobs:
           echo 'user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: Chown repo to build user
-        run: chown --recursive user .
       - name: Regenerate .SRCINFO
         run: |
           sudo -u user makepkg --printsrcinfo > .SRCINFO
-          chown user .SRCINFO
           git add .SRCINFO
       - name: Fix pkgbuild checksums
         run: |
           pacman -S pacman-contrib --noconfirm
-          sudo -u user updpkgsums
-      - name: git dubious ownership hack
-        run: git config --global --add safe.directory "$(realpath .)"
+          updpkgsums
       - name: Commit and push
         run: |
           git diff || exit 0
