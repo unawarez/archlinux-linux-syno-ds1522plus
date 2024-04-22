@@ -51,7 +51,7 @@ jobs:
           sudo -u user updpkgsums
       - name: Commit and push
         run: |
-          git diff || exit 0
+          if [ -z "$(git ls-files -m)" ]; then exit 0; fi
           git config --global user.name "GitHub Actions"
           git config --global user.email "null@bot"
           git commit -a -m "bot chore: update .SRCINFO and pkgbuild sums"
