@@ -12,9 +12,12 @@ defaults:
   run:
     # required to get `-eo pipefail`
     shell: bash
+env:
+  # even git STATUS fails without these!
+  GIT_AUTHOR_NAME: GitHub Actions
+  GIT_AUTHOR_EMAIL: null@bot
 
 jobs:
-
   fix-srcinfo-and-sums:
     name: Push fixed .SRCINFO and update pkgbuild checksums
     permissions:
@@ -50,8 +53,7 @@ jobs:
       - name: Commit and push
         run: |
           git status || exit 0
-          git commit -a -m "bot chore: update .SRCINFO and pkgbuild sums" \
-            --author "GitHub Actions runner <null@bot>"
+          git commit -a -m "bot chore: update .SRCINFO and pkgbuild sums"
           git push
 
   makepkg:
