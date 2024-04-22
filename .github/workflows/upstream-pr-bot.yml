@@ -10,15 +10,15 @@ env:
   UPSTREAM_REMOTE: "https://gitlab.archlinux.org/archlinux/packaging/packages/linux.git"
   UPSTREAM_REF: main
   BRANCH_NAME: "actions-merge-upstream-${{ github.run_id }}"
-
+permissions:
+  # writing the pr topic branch is writing to the real repo...
+  contents: write
+  pull-requests: write
 jobs:
   job:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       # a necessary component of `gh pr new` is having a unique branch already created with the commits on it.
