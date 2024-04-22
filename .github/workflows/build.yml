@@ -45,7 +45,9 @@ jobs:
       - name: Fix pkgbuild checksums
         run: |
           pacman -S pacman-contrib --noconfirm
-          # updpkgsums is impl'd in terms of makepkg so it can't run as root
+          # updpkgsums is impl'd in terms of makepkg so it can't run as root.
+          # also means user needs write perms to pkgbuild.
+          chmod o+w PKGBUILD
           sudo -u user updpkgsums
       - name: Commit and push
         run: |
