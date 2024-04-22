@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       # a necessary component of `gh pr new` is having a unique branch already created with the commits on it.
