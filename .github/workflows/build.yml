@@ -37,6 +37,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Regenerate .SRCINFO
         run: |
+          chmod o+w .
           sudo -u user makepkg --printsrcinfo > .SRCINFO
           git add .SRCINFO
       - name: Fix pkgbuild checksums
