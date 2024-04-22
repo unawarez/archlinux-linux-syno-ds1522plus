@@ -1,12 +1,12 @@
 # Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
 
-pkgbase=linux-syno-ds1522x
-pkgver=6.6.1.arch1
-pkgrel=1
-pkgdesc='Linux kernel for the Synology DS1522+'
-url='https://github.com/unawarez/archlinux-linux-syno-ds1522x'
+pkgbase=linux
+pkgver=6.8.7.arch1
+pkgrel=2
+pkgdesc='Linux'
+url='https://github.com/archlinux/linux'
 arch=(x86_64)
-license=(GPL2)
+license=(GPL-2.0-only)
 makedepends=(
   bc
   cpio
@@ -17,40 +17,45 @@ makedepends=(
   python
   tar
   xz
+
+  # htmldocs
+  graphviz
+  imagemagick
+  python-sphinx
+  python-yaml
+  texlive-latexextra
 )
-options=('!strip')
+options=(
+  !debug
+  !strip
+)
 _srcname=linux-${pkgver%.*}
 _srctag=v${pkgver%.*}-${pkgver##*.}
 source=(
   https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.tar.{xz,sign}
-  https://github.com/archlinux/linux/releases/download/$_srctag/linux-$_srctag.patch.zst{,.sig}
+  $url/releases/download/$_srctag/linux-$_srctag.patch.zst{,.sig}
   config  # the main kernel config file
 )
 validpgpkeys=(
   ABAF11C65A2970B130ABE3C479BE3E4300411886  # Linus Torvalds
   647F28654894E3BD457199BE38DBBDC86092693E  # Greg Kroah-Hartman
-  A2FF3A36AAA56654109064AB19802F8B0D70FC30  # Jan Alexander Steffens (heftig)
+  83BC8889351B5DEBBB68416EB8AC08600F108CDF  # Jan Alexander Steffens (heftig)
 )
 # https://www.kernel.org/pub/linux/kernel/v6.x/sha256sums.asc
-sha256sums=('da1ed7d47c97ed72c9354091628740aa3c40a3c9cd7382871f3cedbd60588234'
+sha256sums=('291d1a1faf4e87b3b0ea9729080db887aafd1ff2fac1430ceca921e46bc22fae'
             'SKIP'
-            '9fd606b2ac0b4ae5df8867b7651574a2e5c480366bac224406fc34ad5d79009b'
+            'a49b47f89187d2fce6c79f263683bc06b152974b4cf8d8faee535e4bcf04adc7'
             'SKIP'
-            'SKIP')
-b2sums=('3bb35ba0386b00aa76dfd073e87b0d5a319d3116a80c39b11a3acd1219bc7d8b3809c1def24a3c4f52abc60f70c170a2f80d80c6b54459eec016c5ddc404c6fc'
+            '3b6e6d0f7f0e6c2c5ff3614b680132b7d568e4c23cf9dc8e833e176fb970c42c')
+b2sums=('e8626a99c6c5769a8126d5ee1c7962c3df3c7a8c689193ffa864c4a4b8e72daeeaf22c3e3bb6ba5490eca3ef64c32a4a12980360a196444a53abadd791cd1855'
         'SKIP'
-        'fda390a1633ea51e00b9d6ab4b89ca2e9ef472261e12e6e0d978d42678449150c384d2be1e9d9655704ffc2ad2f34b6e6dcf0b5862f1419d805e6c67e3e67bb3'
+        'ae851de7fbe18ace280440a0125e5a0d864e4d648e1161ad03c99eaabf7d228d6c9c6869520ddd14b546c14e30b17c6a191d947ad4e9652cd8af9d9ad209eef3'
         'SKIP'
-        'SKIP')
+        '3cceed93d989f168bbb9b18e99d2bb264e72da3ae6de34f94630eba0605be3577d139b62ab602ae8c3295796310fc7345577be234b288b9f1d4a2c61cbd5c015')
 
 export KBUILD_BUILD_HOST=archlinux
 export KBUILD_BUILD_USER=$pkgbase
 export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
-
-# AMD R1000 is zen family v1.
-# confirmed experimentally that gcc allows you to give -march multiple times,
-# it doesn't error, just ignores all but the last one.
-export KCFLAGS="$KCFLAGS -march=znver1"
 
 prepare() {
   cd $_srcname
@@ -72,7 +77,7 @@ prepare() {
   echo "Setting config..."
   cp ../config .config
   make olddefconfig
-  diff -u ../config .config || exit 2
+  diff -u ../config .config || :
 
   make -s kernelrelease > version
   echo "Prepared $pkgbase version $(<version)"
@@ -81,6 +86,8 @@ prepare() {
 build() {
   cd $_srcname
   make all
+  make -C tools/bpf/bpftool vmlinux.h feature-clang-bpf-co-re=1
+  make htmldocs
 }
 
 _package() {
@@ -132,7 +139,7 @@ _package-headers() {
 
   echo "Installing build files..."
   install -Dt "$builddir" -m644 .config Makefile Module.symvers System.map \
-    localversion.* version vmlinux
+    localversion.* version vmlinux tools/bpf/bpftool/vmlinux.h
   install -Dt "$builddir/kernel" -m644 kernel/Makefile
   install -Dt "$builddir/arch/x86" -m644 arch/x86/Makefile
   cp -t "$builddir" -a scripts
@@ -227,6 +234,7 @@ _package-docs() {
 pkgname=(
   "$pkgbase"
   "$pkgbase-headers"
+  "$pkgbase-docs"
 )
 for _p in "${pkgname[@]}"; do
   eval "package_$_p() {
