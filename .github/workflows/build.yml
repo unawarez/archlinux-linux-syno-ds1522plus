@@ -1,4 +1,4 @@
-name: build
+name: Build and release kernel packages
 on:
   push:
     branches: main
@@ -20,17 +20,20 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
-      - uses: actions/checkout@v4
       # makepkg fails even for printsrcinfo if uid==0 or if the src dir isn't writable.
       - name: Create build user
         run: |
           useradd -m user
           echo 'user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+      - name: Checkout repo
+        uses: actions/checkout@v4
       - name: Chown repo to build user
         run: chown --recursive user .
       - name: Regenerate .SRCINFO
         run: |
           sudo -u user makepkg --printsrcinfo > .SRCINFO
+      - name: Install updpkgsums
+        run: pacman -S pacman-contrib --noconfirm
       - name: Fix pkgbuild checksums
         run: sudo -u user updpkgsums
       - name: Commit and push
