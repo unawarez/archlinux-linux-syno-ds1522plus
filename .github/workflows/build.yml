@@ -105,10 +105,10 @@ jobs:
         run: sudo -u user MAKEFLAGS="$MAKEFLAGS -j$(nproc)" makepkg -s --noconfirm
       # somehow gh can't see the git repo after makepkg.
       - name: Create release
-        # TODO propagate package version to tag name.
-        # it allows duplicate tag names, but it is terribly confusing later in the UI.
+        # TODO propagate package version to tag name
         run: |
           tar cvf /tmp/packages.tar linux-syno*.pkg.*
-          gh release create --repo ${{ github.repository }} gh-actions-latest /tmp/packages.tar
+          # TODO same fragile hack as earlier: workflow trigger SHA isn't post srcinfo-fix SHA, so use rev-parse HEAD to see the local SHA
+          gh release create --repo ${{ github.repository }} "$(git rev-parse HEAD)" /tmp/packages.tar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
