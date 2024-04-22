@@ -22,13 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
-      # makepkg fails even for printsrcinfo if uid==0 or if the src dir isn't writable.
       - name: Initialize pacman & get git
         run: |
           pacman-key --init
           pacman -Sy git --noconfirm
         # WARN: not doing -Syu, so technically installing anything is UB, but what is being installed seems harmless
         # and -Syu MULTIPLE TIMES per run is wasteful.
+      # makepkg fails even for printsrcinfo if uid==0 or if the src dir isn't writable.
       - name: Create build user
         run: |
           useradd -m user
@@ -65,6 +65,13 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
+      # git bin is needed before actions/checkout to get a .git at all
+      - name: Initialize pacman & get git
+        run: |
+          pacman-key --init
+          pacman -Sy git --noconfirm
+        # WARN: not doing -Syu, so technically installing anything is UB, but what is being installed seems harmless
+        # and -Syu MULTIPLE TIMES per run is wasteful.
       - uses: actions/checkout@v4
         with:
           # TODO bad weird hack: srcinfo job might push, moving the branch that triggered this from aaa to bbb.
@@ -103,7 +110,6 @@ jobs:
         run: pacman -S git github-cli --noconfirm
       - name: Run makepkg
         run: sudo -u user MAKEFLAGS="$MAKEFLAGS -j$(nproc)" makepkg -s --noconfirm
-      # somehow gh can't see the git repo after makepkg.
       - name: Create release
         # TODO propagate package version to tag name
         run: |
