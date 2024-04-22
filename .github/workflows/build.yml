@@ -35,9 +35,11 @@ jobs:
           echo 'user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
       - name: Checkout repo
         uses: actions/checkout@v4
+      - name: unavoidable git dubious ownership workaround
+        run: git config --global --add safe.directory "$(realpath .)"
       - name: Regenerate .SRCINFO
         run: |
-          chmod o+w .
+          chmod o+w .  # or makepkg dies right away
           sudo -u user makepkg --printsrcinfo > .SRCINFO
           git add .SRCINFO
       - name: Fix pkgbuild checksums
