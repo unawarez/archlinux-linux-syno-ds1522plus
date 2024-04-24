@@ -22,6 +22,8 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       # a necessary component of `gh pr new` is having a unique branch already created with the commits on it.
       # how to clean these branches up?
 
@@ -32,8 +34,9 @@ jobs:
       - name: Read upstream repo
         run: |
           git fetch "$UPSTREAM_REMOTE" "$UPSTREAM_REF"
-          echo Local rev:    $(git rev-parse HEAD)
-          echo Upstream rev: $(git rev-parse FETCH_HEAD)
+          echo "Local rev:    $(git rev-parse HEAD)"
+          echo "Upstream rev: $(git rev-parse FETCH_HEAD)"
+      # TODO git branch has some "is it merged?" test flags; use those instead of dumb git-status string check later?
       - name: Attempt automerge
         run: |
           git checkout -b "$BRANCH_NAME" --track
