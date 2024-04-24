@@ -24,26 +24,32 @@ jobs:
       - uses: actions/checkout@v4
       # a necessary component of `gh pr new` is having a unique branch already created with the commits on it.
       # how to clean these branches up?
-      - run: | 
-          git config user.name upstream-pr-bot
-          git config user.email upstream-pr@bot
-      - run: git checkout -b "$BRANCH_NAME"
-      # don't know if it's guaranteed that main always points to latest tagged release,
-      # but if it isn't I don't know what else to do.
-      # allow-unrelated-histories isn't needed at a local cli so not sure what's different here.
-      - run: git pull --no-commit --no-rebase --allow-unrelated-histories -s ort -X ours "$UPSTREAM_REMOTE" "$UPSTREAM_REF"
-        # no-rebase is REQUIRED (or rebase or ff-only), just one of them is usually already set locally in user's global cfg.
-        # no-commit supports removing .SRCINFO; alternative would be commit --amend later.
-        # ort ours vs theirs I'm not sure what's best, but just choose something so that we have a commit no matter what.
-        # allow-unrelated-histories is required but makes no sense; never required locally, even if upstream is not a remote. whatever.
+
+      # so: there is some insane and horrible difference between local and GH-actions git.
+      # git here just refuses to see that upstream has ever been merged into this repo.
+      # beginning to rewrite all of this with lots more diagnostics.
+
+      - name: Read upstream repo
+        run: |
+          git fetch "$UPSTREAM_REMOTE" "$UPSTREAM_REF"
+          echo Local rev:    $(git rev-parse HEAD)
+          echo Upstream rev: $(git rev-parse FETCH_HEAD)
+      - name: Attempt automerge
+        run: |
+          git checkout -b "$BRANCH_NAME" --track
+          git merge --no-commit -s ort -X ours FETCH_HEAD
+          git status
       # this automerge commit will 100% have wrong content in the pkgbuild, e.g. ignoring anything related to the new version number!
       # user just has to know that a commit (maybe amend) is needed. how can this be automated?
       # the wrongness of pkgbuild also means there is no point regenerating .SRCINFO or checksums right now.
       # in fact let's just delete .SRCINFO to avoid diff noise. another bot run can just generate it.
-      - run: |
-          if [ -s "$(git status --short)" ]; then
+      - name: Commit if changes occurred
+        run: |
+          if [ -n "$(git status --short)" ]; then
             git rm -f .SRCINFO
-            git commit  # assuming the pull --no-commit left a commit message
-            git push -u origin "$BRANCH_NAME"  # gh is supposed to auto-push, but it doesn't work non-interactively
+            git config user.name upstream-pr-bot
+            git config user.email upstream-pr@bot
+            git commit
+            git push
             gh pr create --draft --body "Please fix this bad automerge and then bring it into main\!"
           fi
