@@ -27,7 +27,6 @@ jobs:
           pacman -Sy git pacman-contrib github-cli --noconfirm
         # WARN: not doing -Syu, so technically installing anything is UB, but what is being installed seems harmless
         # and -Syu usually downloads a lot.
-
       - name: Checkout repo
         uses: actions/checkout@v4
       - name: unavoidable git dubious ownership workaround
@@ -38,7 +37,7 @@ jobs:
         run: |
           useradd -m user
           #echo 'user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
-          chown --recursive user * .*
+          chown --recursive user .
       - name: Regenerate .SRCINFO
         run: sudo -u user makepkg --printsrcinfo > .SRCINFO
       - name: Regenerate PKGBUILD checksums
@@ -74,7 +73,6 @@ jobs:
           (source PKGBUILD; echo -n "${epoch:-1}:$pkgver-${pkgrel:-1}" > VERSION)
           export VERSION="$(cat VERSION)"
           echo Package version: "$VERSION"
-          # TODO same fragile hack as earlier: workflow trigger SHA isn't post srcinfo-fix SHA, so use rev-parse HEAD to see the local SHA
           gh release create --repo ${{ github.repository }} "v$VERSION" /tmp/packages.tar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
