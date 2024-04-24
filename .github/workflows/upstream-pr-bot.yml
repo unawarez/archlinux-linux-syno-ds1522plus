@@ -1,7 +1,7 @@
 name: Create an upstream merge PR every so often
 on:
   schedule:
-  - cron: "17 17 * * *"
+  - cron: "17 */6 * * *"
   workflow_dispatch:
   push:
     paths: ".github/workflows/upstream-pr-bot.yml"
@@ -23,36 +23,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      # a necessary component of `gh pr new` is having a unique branch already created with the commits on it.
-      # how to clean these branches up?
-
-      # so: there is some insane and horrible difference between local and GH-actions git.
-      # git here just refuses to see that upstream has ever been merged into this repo.
-      # beginning to rewrite all of this with lots more diagnostics.
-
+          fetch-depth: 0  # crucial for git to perform merges, otherwise it sees zero history of this project and considers everything unrelated
       - name: Read upstream repo
         run: |
           git fetch "$UPSTREAM_REMOTE" "$UPSTREAM_REF"
           echo "Local rev:    $(git rev-parse HEAD)"
           echo "Upstream rev: $(git rev-parse FETCH_HEAD)"
-      # TODO git branch has some "is it merged?" test flags; use those instead of dumb git-status string check later?
+      # TODO git branch --{,no-}{contains,merged} instead of (git merge; git status)
       - name: Attempt automerge
+        # this automerge commit will 100% have wrong content in the pkgbuild, e.g. ignoring anything related to the new version number!
+        # user just has to know that a commit (maybe amend) is needed. how can this be automated?
+        # the wrongness of pkgbuild also means there is no point regenerating .SRCINFO or checksums right now.
+        # in fact let's just delete .SRCINFO to avoid diff noise. another bot run can just generate it.
         run: |
-          git checkout -b "$BRANCH_NAME" --track
-          git merge --no-commit -s ort -X ours FETCH_HEAD
-          git status
-      # this automerge commit will 100% have wrong content in the pkgbuild, e.g. ignoring anything related to the new version number!
-      # user just has to know that a commit (maybe amend) is needed. how can this be automated?
-      # the wrongness of pkgbuild also means there is no point regenerating .SRCINFO or checksums right now.
-      # in fact let's just delete .SRCINFO to avoid diff noise. another bot run can just generate it.
-      - name: Commit if changes occurred
-        run: |
-          if [ -n "$(git status --short)" ]; then
+          if [ -n "$(git branch --list "${{ github.ref }}" --no-contains FETCH_HEAD)" ]; then
+            # docs are confusing, but via experimentation --contains works, --merged doesn't.
+            git checkout -b "$BRANCH_NAME" --track
+            git merge --no-commit -s ort -X ours FETCH_HEAD
             git rm -f .SRCINFO
             git config user.name upstream-pr-bot
             git config user.email upstream-pr@bot
             git commit
-            git push
+            #git push
             gh pr create --draft --body "Please fix this bad automerge and then bring it into main\!"
           fi
