@@ -70,7 +70,8 @@ jobs:
         run: |
           tar cvf /tmp/packages.tar linux-syno*.pkg.*
           # want to get the actual version being built. closest thing i found to doc'd "which fields affect the package version?" is "epoch:version-rel" in the pacman manual.
-          (source PKGBUILD; echo -n "${epoch:-1}:$pkgver-${pkgrel:-1}" > VERSION)
+          # github freaks out on : in a tag name so instead I use _
+          (source PKGBUILD; echo -n "${epoch:-1}_$pkgver-${pkgrel:-1}" > VERSION)
           export VERSION="$(cat VERSION)"
           echo Package version: "$VERSION"
           gh release create --repo ${{ github.repository }} "v$VERSION" /tmp/packages.tar
