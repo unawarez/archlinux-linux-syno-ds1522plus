@@ -15,106 +15,66 @@ defaults:
     shell: bash
 
 jobs:
-  fix-srcinfo-and-sums:
-    name: Push fixed .SRCINFO and update pkgbuild checksums
+  build:
     permissions:
       contents: write
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     steps:
-      - name: Initialize pacman & get git
+      - name: Initialize pacman & get prereqs
         run: |
           pacman-key --init
-          pacman -Sy git --noconfirm
+          pacman -Sy git pacman-contrib github-cli --noconfirm
         # WARN: not doing -Syu, so technically installing anything is UB, but what is being installed seems harmless
-        # and -Syu MULTIPLE TIMES per run is wasteful.
-      # makepkg fails even for printsrcinfo if uid==0 or if the src dir isn't writable.
-      - name: Create build user
-        run: |
-          useradd -m user
-          echo 'user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+        # and -Syu usually downloads a lot.
+
       - name: Checkout repo
         uses: actions/checkout@v4
       - name: unavoidable git dubious ownership workaround
+        # actions/checkout is supposed to do this, but something something containers
         run: git config --global --add safe.directory "$(realpath .)"
-      - name: Regenerate .SRCINFO
-        run: |
-          chmod o+w .  # or makepkg dies right away
-          sudo -u user makepkg --printsrcinfo > .SRCINFO
-          git add .SRCINFO
-      - name: Fix pkgbuild checksums
-        run: |
-          pacman -S pacman-contrib --noconfirm
-          # updpkgsums is impl'd in terms of makepkg so it can't run as root.
-          # also means user needs write perms to pkgbuild.
-          chmod o+w PKGBUILD
-          sudo -u user updpkgsums
-      - name: Commit and push
-        run: |
-          if [ -z "$(git ls-files -m)" ]; then exit 0; fi
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "null@bot"
-          git commit -a -m "bot chore: update .SRCINFO and pkgbuild sums"
-          git push
-
-  makepkg:
-    name: Build Arch packages
-    needs: fix-srcinfo-and-sums
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    container: archlinux:base-devel
-    steps:
-      # git bin is needed before actions/checkout to get a .git at all
-      - name: Initialize pacman & get git
-        run: |
-          pacman-key --init
-          pacman -Sy git --noconfirm
-        # WARN: not doing -Syu, so technically installing anything is UB, but what is being installed seems harmless
-        # and -Syu MULTIPLE TIMES per run is wasteful.
-      - uses: actions/checkout@v4
-        with:
-          # TODO bad weird hack: srcinfo job might push, moving the branch that triggered this from aaa to bbb.
-          # but actions/checkout will still read aaa here from the workflow info. we want bbb though.
-          # this workd forcing ref to main because this workflow is only triggered on main. it's a stupid bug if any other
-          # branches are ever enabled though.
-          ref: main
-
       # makepkg fails even for printsrcinfo if uid==0 or if the src dir isn't writable.
-      - name: Create build user
+      - name: "Setup non-root access so that makepkg doesn't insta-die"
         run: |
           useradd -m user
-          echo 'user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
-      - name: Chown repo to build user
-        run: chown --recursive user .
-
-      - name: Ensure .SRCINFO is up to date
+          #echo 'user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+          chown --recursive user * .*
+      - name: Regenerate .SRCINFO
+        run: sudo -u user makepkg --printsrcinfo > .SRCINFO
+      - name: Regenerate PKGBUILD checksums
+        # updpkgsums is impl'd in terms of makepkg so it can't run as root.
+        # also means user needs write perms to PKGBUILD.
+        run: sudo -u user updpkgsums
+      - name: Commit and push if necessary
         run: |
-          sudo -u user makepkg --printsrcinfo > /tmp/.SRCINFO
-          diff .SRCINFO /tmp/.SRCINFO
-
+          if [ -n "$(git ls-files -m)" ]; then
+            git config --global user.name "build bot"
+            git config --global user.email "build@bot"
+            git commit -a -m "bot chore: update .SRCINFO and pkgbuild sums"
+            git push
+          fi
+      # even if we did a sneaky commit&push there, the cwd checkout will be the latest.
+      # but it does mean github.sha would be wrong. not great but works for this for now.
       - name: Get upstream PGP keys
         # this is very sensitive to choice of keyserver per key.
         # keyserver.ubuntu.com should be the gpg default now.
         # linus' key isn't found with either server lol.
         # TODO why is there the keys/ dir in here? what is the threat model?
+        # TODO freshen these, or just load ./keys/*
         run: |
           sudo -u user gpg --keyserver hkps://keys.openpgp.org --recv-keys A2FF3A36AAA56654109064AB19802F8B0D70FC30
           sudo -u user gpg --recv-keys ABAF11C65A2970B130ABE3C479BE3E4300411886 647F28654894E3BD457199BE38DBBDC86092693E B8AC08600F108CDF
-      - name: Bootstrap pacman
-        run: |
-          pacman-key --init
-          pacman -Syu --noconfirm
-      - name: Install github-cli
-        # github-cli does not depend on git; lolsob
-        run: pacman -S git github-cli --noconfirm
       - name: Run makepkg
         run: sudo -u user MAKEFLAGS="$MAKEFLAGS -j$(nproc)" makepkg -s --noconfirm
       - name: Create release
-        # TODO propagate package version to tag name
+        # TODO try not to source pkgbuild with github token in the env...
         run: |
           tar cvf /tmp/packages.tar linux-syno*.pkg.*
+          # want to get the actual version being built. closest thing i found to doc'd "which fields affect the package version?" is "epoch:version-rel" in the pacman manual.
+          (source PKGBUILD; echo -n "${epoch:-1}:$pkgver-${pkgrel:-1}" > VERSION)
+          export VERSION="$(cat VERSION)"
+          echo Package version: "$VERSION"
           # TODO same fragile hack as earlier: workflow trigger SHA isn't post srcinfo-fix SHA, so use rev-parse HEAD to see the local SHA
-          gh release create --repo ${{ github.repository }} "$(git rev-parse HEAD)" /tmp/packages.tar
+          gh release create --repo ${{ github.repository }} "v$VERSION" /tmp/packages.tar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
