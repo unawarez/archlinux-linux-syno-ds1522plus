@@ -36,7 +36,7 @@ jobs:
       - name: "Setup non-root access so that makepkg doesn't insta-die"
         run: |
           useradd -m user
-          #echo 'user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+          echo 'user ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers  # even root needs user password otherwise
           chown --recursive user .
       - name: Regenerate .SRCINFO
         run: sudo -u user makepkg --printsrcinfo > .SRCINFO
