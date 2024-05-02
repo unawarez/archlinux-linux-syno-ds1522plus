@@ -1,8 +1,11 @@
 #!/bin/bash
 
+# allows for passing REBASE_HEAD if you like. TODO detect?
+THEIRS="${1:-MERGE_HEAD}"
+
 # keys/ should be completely replaced with upstream every time.
 # automerging it will not necessarily delete old keys.
-git checkout MERGE_HEAD -- keys/
+git checkout "$THEIRS" -- keys/
 
 # .SRCINFO needs to be updated with makepkg. to keep this runnable
 # outside of arch, it's just deleted for now, to lower the amount of
