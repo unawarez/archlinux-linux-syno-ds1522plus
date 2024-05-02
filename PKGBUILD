@@ -1,8 +1,8 @@
 # Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
 
 pkgbase=linux-syno-ds1522plus
-pkgver=6.8.7.arch1
-pkgrel=2
+pkgver=6.8.9.arch1
+pkgrel=1
 pkgdesc='Linux kernel for the Synology DS1522+'
 url='https://github.com/unawarez/archlinux-linux-syno-ds1522plus'
 arch=(x86_64)
@@ -35,14 +35,14 @@ validpgpkeys=(
   83BC8889351B5DEBBB68416EB8AC08600F108CDF  # Jan Alexander Steffens (heftig)
 )
 # https://www.kernel.org/pub/linux/kernel/v6.x/sha256sums.asc
-sha256sums=('291d1a1faf4e87b3b0ea9729080db887aafd1ff2fac1430ceca921e46bc22fae'
+sha256sums=('f905f1238ea7a8e85314bacf283302e8097006010d25fcea726d0de0ea5bc9b6'
             'SKIP'
-            'a49b47f89187d2fce6c79f263683bc06b152974b4cf8d8faee535e4bcf04adc7'
+            '7a212eedb9fe3da99d6d5b63eb5f28c10ee4333e4d42ea1bb3842a15d3107bef'
             'SKIP'
             '2e241aa48fb44cbbc78db63ddc14257d2d1572842dbd426c74f03cdff5e2486a')
 b2sums=('e8626a99c6c5769a8126d5ee1c7962c3df3c7a8c689193ffa864c4a4b8e72daeeaf22c3e3bb6ba5490eca3ef64c32a4a12980360a196444a53abadd791cd1855'
         'SKIP'
-        'ae851de7fbe18ace280440a0125e5a0d864e4d648e1161ad03c99eaabf7d228d6c9c6869520ddd14b546c14e30b17c6a191d947ad4e9652cd8af9d9ad209eef3'
+        '4b7fce0c3be10e51f45d4b9730dadeaff4881a42021ea31dfe6d33f73fb2f37d2a89e66d98b39b78a5b6052673d75de187faa4e8011ce0b25716786916f653fb'
         'SKIP'
         '4217154da632c67190b8bf835323f7d3672ab48c222e744c92bfb353c12817369610c4eafd3b8a3ff9bbad07956426b438e5faf28f084282e5be37d0f5eb5d60')
 
