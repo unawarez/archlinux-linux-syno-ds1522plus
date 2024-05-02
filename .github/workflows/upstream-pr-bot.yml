@@ -26,15 +26,27 @@ jobs:
           fetch-depth: 0  # crucial for git to perform merges, otherwise it sees zero history of this project and considers everything unrelated
       - name: Read upstream repo
         run: |
+          echo "Local (HEAD):          $(git rev-parse HEAD)"
           git fetch "$UPSTREAM_REMOTE" "$UPSTREAM_REF"
-          echo "Local rev:    $(git rev-parse HEAD)"
-          echo "Upstream rev: $(git rev-parse FETCH_HEAD)"
+          echo "Upstream (FETCH_HEAD): $(git rev-parse FETCH_HEAD)"
+          # tricky to run the cmd, pass through any output, but also capture and switch on $? without overwriting it,
+          # AND hide nonzero cmd statuses from the outer shell so it can't kill the whole script.
+          if git merge-base --is-ancestor FETCH_HEAD HEAD ; then
+            export UP_TO_DATE=y
+          else
+            export ERR=$?
+            case $ERR in
+              1) export UP_TO_DATE= ;;
+              *) echo Up-to-date check git exitcode $ERR; exit $ERR ;;
+            esac
+          fi
+          echo "Up to date: $([ -n $UP_TO_DATE ] && echo yes || echo no)"
       - name: Attempt automerge
         # this automerge commit will 100% have wrong content in the pkgbuild, e.g. ignoring anything related to the new version number!
         # user just has to know that a commit (maybe amend) is needed. how can this be automated?
         # TODO learn gh actions job state and outputs and stuff...
         run: |
-          if [ -n "$(git branch --list "$(git branch --show-current)" --no-contains FETCH_HEAD)" ]; then
+          if [ -n $UP_TO_DATE ]; then
             # ^ docs are confusing, but via experimentation --contains works, --merged doesn't.
             git checkout -b "$BRANCH_NAME"  # --track is insane; will assoc to origin/main, not origin/BRANCH_NAME
             # even with --no-commit, git merge will unalive itself without user name set.
