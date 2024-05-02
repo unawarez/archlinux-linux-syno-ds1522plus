@@ -42,9 +42,13 @@ jobs:
             # even with --no-commit, git merge will unalive itself without user name set.
             git config user.name upstream-pr-bot
             git config user.email upstream-pr@bot
-            git merge --no-commit --no-edit -s ort -X ours FETCH_HEAD
+            git merge --no-commit -s ort -X ours FETCH_HEAD
             git rm -f .SRCINFO
-            git merge --continue
+            #git merge --continue
+            # ^ dies due to "dumb terminal, please use -m", but with --continue it straight up refuses to parse any other cli args and dies.
+            # --no-edit on the merge does not help. so, back to plain commit with a -m message? 
+            # will that lose all the merge metadata?
+            git commit -m 'merge upstream'
             #git push
             gh pr create --draft --body "Please fix this bad automerge and then bring it into main\!"
           fi
