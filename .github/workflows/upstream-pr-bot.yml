@@ -37,12 +37,13 @@ jobs:
         # TODO learn gh actions job state and outputs and stuff...
         run: |
           if [ -n "$(git branch --list "$(git branch --show-current)" --no-contains FETCH_HEAD)" ]; then
-            # docs are confusing, but via experimentation --contains works, --merged doesn't.
+            # ^ docs are confusing, but via experimentation --contains works, --merged doesn't.
             git checkout -b "$BRANCH_NAME" --track
-            git merge --no-commit -s ort -X ours FETCH_HEAD
-            git rm -f .SRCINFO
+            # even with --no-commit, git merge will unalive itself without user name set.
             git config user.name upstream-pr-bot
             git config user.email upstream-pr@bot
+            git merge --no-commit -s ort -X ours FETCH_HEAD
+            git rm -f .SRCINFO
             git commit
             #git push
             gh pr create --draft --body "Please fix this bad automerge and then bring it into main\!"
