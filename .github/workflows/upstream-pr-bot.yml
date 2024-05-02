@@ -40,7 +40,12 @@ jobs:
             # even with --no-commit, git merge will unalive itself without user name set.
             git config user.name upstream-pr-bot
             git config user.email upstream-pr@bot
-            git merge --no-commit -s ort -X ours FETCH_HEAD
+            # git merge with a normal strategy still exits with code 1 on conflicts, which can still
+            # happen on .SRCINFO sometimes because of the current not-so-great
+            # "build job commits .SRCINFO and PKGBUILD" setup.
+            # trial and error suggests git is good about reserving different exit codes for different things,
+            # so will keep going even with a code 1 fail here. still not great, but don't know what else to do.
+            git merge --no-commit -s ort -X ours FETCH_HEAD || [ $? -eq 1 ]
             ./automerge-steps.sh
             #git merge --continue
             # ^ dies due to "dumb terminal, please use -m", but with --continue it straight up refuses to parse any other cli args and dies.
