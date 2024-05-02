@@ -49,6 +49,6 @@ jobs:
             # --no-edit on the merge does not help. so, back to plain commit with a -m message? 
             # will that lose all the merge metadata?
             git commit -m 'merge upstream'
-            #git push
+            git push
             gh pr create --draft --fill --body "Please fix this bad automerge and then bring it into main\!"
           fi
