@@ -38,7 +38,7 @@ jobs:
         run: |
           if [ -n "$(git branch --list "$(git branch --show-current)" --no-contains FETCH_HEAD)" ]; then
             # ^ docs are confusing, but via experimentation --contains works, --merged doesn't.
-            git checkout -b "$BRANCH_NAME" --track
+            git checkout -b "$BRANCH_NAME"  # --track is insane; will assoc to origin/main, not origin/BRANCH_NAME
             # even with --no-commit, git merge will unalive itself without user name set.
             git config user.name upstream-pr-bot
             git config user.email upstream-pr@bot
@@ -49,6 +49,6 @@ jobs:
             # --no-edit on the merge does not help. so, back to plain commit with a -m message? 
             # will that lose all the merge metadata?
             git commit -m 'merge upstream'
-            git push
+            git push -u origin "$BRANCH_NAME"
             gh pr create --draft --fill --body "Please fix this bad automerge and then bring it into main\!"
           fi
