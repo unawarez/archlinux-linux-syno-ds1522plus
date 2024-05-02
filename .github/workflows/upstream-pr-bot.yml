@@ -32,8 +32,6 @@ jobs:
       - name: Attempt automerge
         # this automerge commit will 100% have wrong content in the pkgbuild, e.g. ignoring anything related to the new version number!
         # user just has to know that a commit (maybe amend) is needed. how can this be automated?
-        # the wrongness of pkgbuild also means there is no point regenerating .SRCINFO or checksums right now.
-        # in fact let's just delete .SRCINFO to avoid diff noise. another bot run can just generate it.
         # TODO learn gh actions job state and outputs and stuff...
         run: |
           if [ -n "$(git branch --list "$(git branch --show-current)" --no-contains FETCH_HEAD)" ]; then
@@ -43,12 +41,11 @@ jobs:
             git config user.name upstream-pr-bot
             git config user.email upstream-pr@bot
             git merge --no-commit -s ort -X ours FETCH_HEAD
-            git rm -f .SRCINFO
+            ./automerge-steps.sh
             #git merge --continue
             # ^ dies due to "dumb terminal, please use -m", but with --continue it straight up refuses to parse any other cli args and dies.
-            # --no-edit on the merge does not help. so, back to plain commit with a -m message? 
-            # will that lose all the merge metadata?
-            git commit -m 'merge upstream'
+            # --no-edit on the merge does not help. so, back to plain commit with a -m message.
+            git commit -m "merge $(git rev-parse FETCH_HEAD) from $UPSTREAM_REMOTE"
             git push -u origin "$BRANCH_NAME"
             gh pr create --draft --fill --body "Please fix this bad automerge and then bring it into main\!"
           fi
