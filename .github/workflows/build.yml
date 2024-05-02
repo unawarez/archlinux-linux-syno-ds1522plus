@@ -54,15 +54,16 @@ jobs:
           fi
       # even if we did a sneaky commit&push there, the cwd checkout will be the latest.
       # but it does mean github.sha would be wrong. not great but works for this for now.
-      - name: Get upstream PGP keys
-        # this is very sensitive to choice of keyserver per key.
-        # keyserver.ubuntu.com should be the gpg default now.
-        # linus' key isn't found with either server lol.
-        # TODO why is there the keys/ dir in here? what is the threat model?
-        # TODO freshen these, or just load ./keys/*
+      - name: Load PGP keys from repo keys/ dir
+        # gpg keyserver fetching is just broken hell in real life; most servers only serve a random 20% of keys.
+        # and, keeping fresh the fingerprint list in this file is totally impractical.
+        # thus, this build bot just imports from the files in keys/pgp.
+        # I don't understand what the threat model is supposed to be if upstream puts
+        # all the keys in the repo (which they probably do for the same "gpg --recv-keys is hell" reason as me).
+        # verifying files from a repo (or downloaded from a url in the repo) against keys also in the repo
+        # is a security no-op, but I will do it because upstream ostensibly does it, and makepkg wants to do it.
         run: |
-          sudo -u user gpg --keyserver hkps://keys.openpgp.org --recv-keys A2FF3A36AAA56654109064AB19802F8B0D70FC30
-          sudo -u user gpg --recv-keys ABAF11C65A2970B130ABE3C479BE3E4300411886 647F28654894E3BD457199BE38DBBDC86092693E B8AC08600F108CDF
+          sudo -u user gpg --import keys/pgp/*
       - name: Run makepkg
         run: sudo -u user MAKEFLAGS="$MAKEFLAGS -j$(nproc)" makepkg -s --noconfirm
       - name: Create release
