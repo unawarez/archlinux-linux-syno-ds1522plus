@@ -23,34 +23,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # crucial for git to perform merges, otherwise it sees zero history of this project and considers everything unrelated
-      - name: Read upstream repo
+          fetch-depth: 0  # crucial for git to perform merges, otherwise it sees zero history of this project and considers everything unrelated. TODO filters? no blobs or something like that?
+      - id: check-outdated
+        name: Check upstream repo for new commits
         run: |
           git fetch "$UPSTREAM_REMOTE" "$UPSTREAM_REF"
-          echo "Local rev:    $(git rev-parse HEAD)"
-          echo "Upstream rev: $(git rev-parse FETCH_HEAD)"
+          echo "Local (HEAD):          $(git rev-parse HEAD)"
+          echo "Upstream (FETCH_HEAD): $(git rev-parse FETCH_HEAD)"
+          # tricky to run the cmd, pass through any output, but also capture and switch on $? without overwriting it,
+          # AND hide nonzero cmd statuses from the outer shell so it can't kill the whole script.
+          if git merge-base --is-ancestor FETCH_HEAD HEAD ; then
+            export OUTDATED=
+          else
+            export ERR=$?
+            case $ERR in
+              1) export OUTDATED=true ;;
+              *) echo Up-to-date check git exitcode $ERR; exit $ERR ;;
+            esac
+          fi
+          echo "Outdated: $([ -n "$OUTDATED" ] && echo "$OUTDATED" || echo false)"
+          echo "OUTDATED=$OUTDATED" >> "$GITHUB_ENV"
+          echo "outdated=$([ -n "$OUTDATED" ] && echo true || echo )" >> "$GITHUB_OUTPUT"
       - name: Attempt automerge
+        if: ${{ steps.check-outdated.outputs.outdated }}
         # this automerge commit will 100% have wrong content in the pkgbuild, e.g. ignoring anything related to the new version number!
         # user just has to know that a commit (maybe amend) is needed. how can this be automated?
         # TODO learn gh actions job state and outputs and stuff...
         run: |
-          if [ -n "$(git branch --list "$(git branch --show-current)" --no-contains FETCH_HEAD)" ]; then
-            # ^ docs are confusing, but via experimentation --contains works, --merged doesn't.
-            git checkout -b "$BRANCH_NAME"  # --track is insane; will assoc to origin/main, not origin/BRANCH_NAME
-            # even with --no-commit, git merge will unalive itself without user name set.
-            git config user.name upstream-pr-bot
-            git config user.email upstream-pr@bot
-            # git merge with a normal strategy still exits with code 1 on conflicts, which can still
-            # happen on .SRCINFO sometimes because of the current not-so-great
-            # "build job commits .SRCINFO and PKGBUILD" setup.
-            # trial and error suggests git is good about reserving different exit codes for different things,
-            # so will keep going even with a code 1 fail here. still not great, but don't know what else to do.
-            git merge --no-commit -s ort -X ours FETCH_HEAD || [ $? -eq 1 ]
-            ./automerge-steps.sh
-            #git merge --continue
-            # ^ dies due to "dumb terminal, please use -m", but with --continue it straight up refuses to parse any other cli args and dies.
-            # --no-edit on the merge does not help. so, back to plain commit with a -m message.
-            git commit -m "merge $(git rev-parse FETCH_HEAD) from $UPSTREAM_REMOTE"
-            git push -u origin "$BRANCH_NAME"
-            gh pr create --draft --fill --body "Please fix this bad automerge and then bring it into main\!"
-          fi
+          git checkout -b "$BRANCH_NAME"  # --track is insane; will assoc to origin/main, not origin/BRANCH_NAME
+          # even with --no-commit, git merge will unalive itself without user name set.
+          git config user.name upstream-pr-bot
+          git config user.email upstream-pr@bot
+          # git merge with a normal strategy still exits with code 1 on conflicts, which can still
+          # happen on .SRCINFO sometimes because of the current not-so-great
+          # "build job commits .SRCINFO and PKGBUILD" setup.
+          # trial and error suggests git is good about reserving different exit codes for different things,
+          # so will keep going even with a code 1 fail here. still not great, but don't know what else to do.
+          git merge --no-commit -s ort -X ours FETCH_HEAD || [ $? -eq 1 ]
+          ./automerge-steps.sh
+          #git merge --continue
+          # ^ dies due to "dumb terminal, please use -m", but with --continue it straight up refuses to parse any other cli args and dies.
+          # --no-edit on the merge does not help. so, back to plain commit with a -m message.
+          git commit -m "merge $(git rev-parse FETCH_HEAD) from $UPSTREAM_REMOTE"
+          git push -u origin "$BRANCH_NAME"
+          gh pr create --draft --fill --body "Please fix this bad automerge and then bring it into main\!"
